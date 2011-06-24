@@ -18,39 +18,40 @@
 (defun oct-string-to-number 
   (string)
   "Converts an octal string to a number.  Only digits from 0 - 7 are accepted; sign or decimal point symbols will cause oct-to-number to fail"
-  (setq place 1)
-  (setq result 0)
-  (setq digits '(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7))
-  (loop for char across (reverse string)
-    do 
-    (setq pos (position char digits))
-    (setq result (+ result (* pos place)))
-    (setq place (* 8 place)))
-  result)
+  (let ((place 1)
+	(result 0)
+	(pos 0)
+	(digits '(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7)))
+    (loop for char across (reverse string)
+	  do 
+	  (setq pos (position char digits))
+	  (setq result (+ result (* pos place)))
+	  (setq place (* 8 place)))
+    result))
 
 (defun slurp-octal-digits 
   (stream)
-  (setq string (make-array 0 :element-type 'character :fill-pointer 0 :adjustable t))
   "Slurps all digits from 0 - 7 from a stream into a string, stopping at EOF, no data, or a non-digit character." 
-  (setq digits '(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7))
-  (with-output-to-string (out)
-             (loop do
-                   (setq char (read-char stream))
-                   (setq isnum nil)
-                   (if char
-                   (progn
-                     (setq isnum (find char digits))
-                     (if isnum
-                     (vector-push-extend char string)
-                       (unread-char char stream))))
-                   while (not (eq nil isnum))))
-  string)
+  (let ((string (make-array 0 :element-type 'character :fill-pointer 0 :adjustable t))
+	(digits '(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7)))
+    (with-output-to-string (out)
+			   (loop do
+				 (let ((char (read-char stream))
+				       (isnum nil))
+				   (if char
+				       (progn
+					 (setq isnum (find char digits))
+					 (if isnum
+					     (vector-push-extend char string)
+					   (unread-char char stream))))
+				   while (not (eq nil isnum)))))
+    string))
 
 (defun octal-string-transformer 
   (stream subchar args)
   "Slurps an octal number from stream, and converts it to a number.  Number must be an unsigned integer."
-  (setq oct-string (slurp-octal-digits stream))
-  (oct-string-to-number oct-string))
+  (let ((oct-string (slurp-octal-digits stream)))
+    (oct-string-to-number oct-string)))
 
 ;; Sets #z to call octal-string-transformer, so e.g. #z1234 will evaluate to 668.  Use #z as SBCL has #o already :-)
 (set-dispatch-macro-character
