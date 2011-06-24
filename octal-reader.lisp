@@ -35,16 +35,17 @@
   (let ((string (make-array 0 :element-type 'character :fill-pointer 0 :adjustable t))
 	(digits '(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7)))
     (with-output-to-string (out)
-			   (loop do
-				 (let ((char (read-char stream))
-				       (isnum nil))
+			   (let ((char nil)
+				 (isnum nil))
+			     (loop do
+				   (setq char (read-char stream))
 				   (if char
 				       (progn
 					 (setq isnum (find char digits))
 					 (if isnum
 					     (vector-push-extend char string)
 					   (unread-char char stream))))
-				   while (not (eq nil isnum)))))
+			     while (not (eq nil isnum)))))
     string))
 
 (defun octal-string-transformer 
